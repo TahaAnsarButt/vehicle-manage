@@ -2,6 +2,8 @@
 import { useState } from "react";
 import { Button, TextField, Alert } from "@mui/material";
 import { login } from "../../actions/controller"; // Import the login function
+import InputFormNew from "./pages/input"
+// import InputFormNew from "./input"
 
 export default function Home() {
   const [formState, setFormState] = useState({ username: "", password: "" });
@@ -37,7 +39,8 @@ export default function Home() {
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
       <div className="container mx-auto p10">
         {user ? (
-          <p>Welcome, {user.name}!</p>
+          
+          <InputFormNew />
         ) : (
           <>
             <p className="text-black-500">
