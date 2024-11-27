@@ -24,7 +24,7 @@ export default function Home() {
     const response = await login(username, password);
 
     if (response.success) {
-      alert('work')
+      // alert('work')
       // If login is successful, set the user state
       setUser({ name: username });
     } else {
