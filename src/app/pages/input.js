@@ -1,16 +1,20 @@
 "use client";
 import { useState } from "react";
-import { Button, TextField, Alert, InputLabel ,MenuItem ,FormControl ,Select, SelectChangeEvent  } from "@mui/material";
-import { Save } from "../../../actions/inputFormController"; // Import the login function
-import { getUserFromCookie } from "../../../lib/getUser";
+import { Button, TextField, FormControl, InputLabel, MenuItem, Select, Alert } from "@mui/material";
+import { Save } from "../../../actions/inputFormController";
+import { getCookie } from 'cookies-next'; 
 
-export default async function InputFormNew() {
-  const user = await getUserFromCookie()
-  console.log('user',user)
-  //name,model,price,picture
-  const [formState, setFormState] = useState({ name: "", model: "",price: "", picture: [] });
+export default function InputFormNew() {
+  const [formState, setFormState] = useState({
+    phoneNumber: "",
+    price: "",
+    model: "",
+    pictures: [],
+    numPictures: 1, // Default to 1 picture
+  });
+
   const [formErrors, setFormErrors] = useState({});
-  // const [user, setUser] = useState(null);
+  const [successMessage, setSuccessMessage] = useState("");
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -20,83 +24,123 @@ export default async function InputFormNew() {
     }));
   };
 
+  const handleFileUpload = (event) => {
+    const files = Array.from(event.target.files).slice(0, formState.numPictures);
+    setFormState((prevState) => ({
+      ...prevState,
+      pictures: files.map(file => file.name), 
+    }));
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    // Call the server-side login function with form data
-    const { name, model, price, picture} = formState;
-    const response = await Save(name, model, price, picture);
+    const token = getCookie("vehicle"); 
+
+    const response = await Save(formState, token);
 
     if (response.success) {
-      
-      // alert('work')
-      // If login is successful, set the user state
-      // setUser({ name: username });
+      setSuccessMessage("Data submitted successfully!");
+      setFormErrors({});
+      setFormState({
+        phoneNumber: "",
+        price: "",
+        model: "",
+        pictures: [],
+        numPictures: 1,
+      });
     } else {
-      // If there are errors, set form errors state
       setFormErrors(response.errors);
+      setSuccessMessage("");
     }
   };
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
       <div className="container mx-auto p10">
-        
-            <p className="text-black-500">
-              <strong>Add Master Data</strong>
-            </p>
-            <form onSubmit={handleSubmit}>
-              <div className="mb-3">
-                <p className="text-blue-300">Name</p>
-                <TextField
-                  required
-                  id="outlined-username"
-                  label="Username"
-                  name="username"
-                  value={formState.username}
-                  onChange={handleChange}
-                />
-              </div>
-              <div className="mb-3">
-                <p className="text-blue-300">Model</p>
-                <TextField
-                  required
-                  id="outlined-password"
-                  label="Password"
-                  name="password"
-                  type="password"
-                  value={formState.password}
-                  onChange={handleChange}
-                />
-              </div>
-              <div className="mb-3">
-                <p className="text-blue-300">Price</p>
-                <TextField
-                  required
-                  id="outlined-password"
-                  label="Password"
-                  name="password"
-                  type="password"
-                  value={formState.password}
-                  onChange={handleChange}
-                />
-              </div>
-              <div className="mb-3">
-                <p className="text-blue-300">Picture</p>
-                <TextField
-                  required
-                  id="outlined-password"
-                  label="Password"
-                  name="password"
-                  type="password"
-                  value={formState.password}
-                  onChange={handleChange}
-                />
-              </div>
-              <Button variant="contained" type="submit">
-                Login
-              </Button>
-            </form>
+        <p className="text-black-500"><strong>Add Master Data</strong></p>
+        <form onSubmit={handleSubmit}>
+          <div className="mb-3">
+            <TextField
+              required
+              id="phoneNumber"
+              label="Phone Number"
+              name="phoneNumber"
+              type="text"
+              value={formState.phoneNumber}
+              onChange={handleChange}
+              error={!!formErrors.phoneNumber}
+              helperText={formErrors.phoneNumber}
+            />
+          </div>
+          <div className="mb-3">
+            <TextField
+              required
+              id="price"
+              label="Price"
+              name="price"
+              type="number"
+              value={formState.price}
+              onChange={handleChange}
+              error={!!formErrors.price}
+              helperText={formErrors.price}
+            />
+          </div>
+          <div className="mb-3">
+            <TextField
+              required
+              id="model"
+              label="Model"
+              name="model"
+              type="text"
+              value={formState.model}
+              onChange={handleChange}
+              error={!!formErrors.model}
+              helperText={formErrors.model}
+            />
+          </div>
+          <div className="mb-3">
+            <FormControl fullWidth>
+              <InputLabel id="numPictures-label">Number of Pictures</InputLabel>
+              <Select
+                labelId="numPictures-label"
+                id="numPictures"
+                name="numPictures"
+                value={formState.numPictures}
+                label="Number of Pictures"
+                onChange={(e) => setFormState((prevState) => ({
+                  ...prevState,
+                  numPictures: e.target.value,
+                  pictures: [], 
+                }))}
+              >
+                {[...Array(10).keys()].map((i) => (
+                  <MenuItem key={i + 1} value={i + 1}>
+                    {i + 1}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </div>
+          <div className="mb-3">
+            <input
+              type="file"
+              multiple
+              accept="image/*"
+              onChange={handleFileUpload}
+              disabled={formState.numPictures <= 0}
+            />
+            {formErrors.pictures && (
+              <Alert severity="error">{formErrors.pictures}</Alert>
+            )}
+          </div>
+          <Button variant="contained" type="submit">
+            Submit
+          </Button>
+          {successMessage && <Alert severity="success">{successMessage}</Alert>}
+          {formErrors.token && <Alert severity="error">{formErrors.token}</Alert>}
+          {formErrors.user && <Alert severity="error">{formErrors.user}</Alert>}
+        </form>
       </div>
     </main>
   );
